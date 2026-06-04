@@ -37,3 +37,4 @@ ros2 service call /standalone_rail_demo/clear_alarm std_srvs/srv/Trigger
 # Demo Topics
 ros2 topic echo /demo/current_position_mm
 ros2 topic echo /demo/is_moving
+ros2 topic echo /demo/in_alarm
