@@ -21,8 +21,9 @@ ros2 topic echo /absolute_homer_left/is_moving
 # Clearing Alarm
 ros2 service call /absolute_homer_left/clear_alarm std_srvs/srv/Trigger
 
-# Start Jogger
-ros2 run linear_rail_controller rail_jogger_left
+# Message
+ros2 topic pub /absolute_homer_left/absolute_target std_msgs/msg/Float64 "{data: -300.0}" -1
+ros2 topic pub /absolute_homer_left/relative_jog std_msgs/msg/Float64 "{data: 50.0}" -1
 
 # Demo
 ros2 run linear_rail_controller demo
