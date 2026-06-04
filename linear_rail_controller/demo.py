@@ -39,6 +39,7 @@ class MonolithicRailDemo(Node):
         # 3. Publish current state
         self.pos_pub = self.create_publisher(Float64, '/demo/current_position_mm', 10)
         self.moving_pub = self.create_publisher(Bool, '/demo/is_moving', 10)
+        self.alarm_pub = self.create_publisher(Bool, '/demo/in_alarm', 10)
         
         # 4. Safety service
         self.clear_alarm_srv = self.create_service(Trigger, '~/clear_alarm', self.clear_alarm_callback)
@@ -116,6 +117,11 @@ class MonolithicRailDemo(Node):
         moving_msg = Bool()
         moving_msg.data = bool(self.is_moving)
         self.moving_pub.publish(moving_msg)
+        
+        # Continuously publish the alarm state alongside the moving state
+        alarm_msg = Bool()
+        alarm_msg.data = bool(self.in_alarm)
+        self.alarm_pub.publish(alarm_msg)
         
         self.last_position_mm = self.current_position_mm
 
