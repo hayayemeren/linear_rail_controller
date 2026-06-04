@@ -19,6 +19,7 @@ class AbsoluteHomerLeft(Node):
         self.in_alarm = False
         self.is_moving = False
         self.current_position_mm = 0.0
+        self.position_initialized = False
 
         # --- DECLARE & FETCH ROS 2 PARAMETERS ---
         self.declare_parameters(
@@ -56,7 +57,9 @@ class AbsoluteHomerLeft(Node):
         self.alarm_pub = self.create_publisher(Bool, '~/in_alarm', 10)
         self.moving_pub = self.create_publisher(Bool, '~/is_moving', 10)
         
-        self.jog_sub = self.create_subscription(Float64, '~/jog_distance', self.jog_callback, 10)
+        # DUAL-MODE SUBSCRIPTIONS
+        self.rel_sub = self.create_subscription(Float64, '~/relative_jog', self.relative_jog_callback, 10)
+        self.abs_sub = self.create_subscription(Float64, '~/absolute_target', self.absolute_target_callback, 10)
         
         self.flash_srv = self.create_service(Trigger, '~/flash_pico_config', self.flash_config_callback)
         self.clear_alarm_srv = self.create_service(Trigger, '~/clear_alarm', self.clear_alarm_callback)
@@ -78,7 +81,7 @@ class AbsoluteHomerLeft(Node):
         self.state_pub_timer = self.create_timer(0.05, self.publish_states_callback)
 
         self.setup_sensors()
-        self.get_logger().info("Node 'absolute_homer_left' initialized. Soft Limits Enabled. Publishing states continuously.")
+        self.get_logger().info("Node 'absolute_homer_left' initialized. Dual-Mode Control & Soft Limits Enabled.")
 
     def setup_sensors(self):
         s1_pin = self.get_parameter('sensor_1_pin').value
@@ -111,7 +114,27 @@ class AbsoluteHomerLeft(Node):
         moving_msg.data = self.is_moving
         self.moving_pub.publish(moving_msg)
 
-    def jog_callback(self, msg):
+    # ==========================================
+    # MOVEMENT LOGIC & BOUNDARIES
+    # ==========================================
+
+    def relative_jog_callback(self, msg):
+        distance_mm = msg.data
+        projected_target = self.current_position_mm + distance_mm
+        self.get_logger().info(f"Received Relative Command: {distance_mm:.2f} mm")
+        self._execute_jog(distance_mm, projected_target)
+
+    def absolute_target_callback(self, msg):
+        if not self.position_initialized:
+            self.get_logger().warn("Cannot calculate absolute target: Waiting for initial position read from Pico.")
+            return
+            
+        target_mm = msg.data
+        distance_mm = target_mm - self.current_position_mm
+        self.get_logger().info(f"Received Absolute Target: {target_mm:.2f} mm. Calculated distance: {distance_mm:.2f} mm")
+        self._execute_jog(distance_mm, target_mm)
+
+    def _execute_jog(self, distance_mm, projected_target):
         if self.in_alarm:
             self.get_logger().warn("Cannot jog: Pico is in ALARM state.")
             return
@@ -122,13 +145,11 @@ class AbsoluteHomerLeft(Node):
             self.get_logger().warn("Cannot jog: Homing in progress.")
             return
 
-        distance_mm = msg.data 
-        
+        if abs(distance_mm) < 0.1:
+            self.get_logger().info("Jog distance too small, ignoring.")
+            return
+
         # --- SOFTWARE LIMIT CHECK ---
-        # Calculate where the rail will end up after this jog
-        projected_target = self.current_position_mm + distance_mm
-        
-        # Upper bound is 0.0, lower bound is negative rail length (e.g., -1000.0)
         lower_bound = -self.rail_length_mm
         upper_bound = 0.0
         
@@ -142,7 +163,11 @@ class AbsoluteHomerLeft(Node):
 
         feed_rate = self.jog_velocity_mm_s * 60.0 
         self.send_gcode(f"$J=G21G91X{distance_mm}F{feed_rate}")
-        self.get_logger().info(f"Jogging {distance_mm} mm... (Target: {projected_target:.2f} mm)")
+        self.get_logger().info(f"Jogging {distance_mm:.2f} mm... (Target: {projected_target:.2f} mm)")
+
+    # ==========================================
+    # PICO CONFIGURATION & HOMING
+    # ==========================================
 
     def configure_pico_eeprom(self):
         self.get_logger().info("Flashing Pico EEPROM...")
@@ -225,6 +250,10 @@ class AbsoluteHomerLeft(Node):
         response.message = "Alarm cleared. CRITICAL: Use the manual jogger to move away from the sensor before homing!"
         return response
 
+    # ==========================================
+    # HARDWARE COMMUNICATION
+    # ==========================================
+
     def connect_to_pico(self):
         try:
             self.pico_serial = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
@@ -292,6 +321,7 @@ class AbsoluteHomerLeft(Node):
         match = re.search(r'(?:MPos|WPos):([-\d.]+)', status_line)
         if match:
             self.current_position_mm = float(match.group(1))
+            self.position_initialized = True
 
     def sensor_triggered_callback(self, pos):
         if self.is_homing:
