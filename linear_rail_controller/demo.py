@@ -35,13 +35,17 @@ class MonolithicRailDemo(Node):
         # 2. Listen for Absolute commands
         self.abs_sub = self.create_subscription(
             Float64, '/demo/absolute_target', self.absolute_target_callback, 10)
+            
+        # 3. Listen for Set Position commands
+        self.set_pos_sub = self.create_subscription(
+            Float64, '/demo/set_current_position', self.set_current_position_callback, 10)
         
-        # 3. Publish current state
+        # 4. Publish current state
         self.pos_pub = self.create_publisher(Float64, '/demo/current_position_mm', 10)
         self.moving_pub = self.create_publisher(Bool, '/demo/is_moving', 10)
         self.alarm_pub = self.create_publisher(Bool, '/demo/in_alarm', 10)
         
-        # 4. Safety service
+        # 5. Safety service
         self.clear_alarm_srv = self.create_service(Trigger, '~/clear_alarm', self.clear_alarm_callback)
 
         # --- HARDWARE THREADS & TIMERS ---
@@ -54,7 +58,7 @@ class MonolithicRailDemo(Node):
         self.state_timer = self.create_timer(0.1, self.evaluate_movement_state)
 
         self.get_logger().info("Dual-Mode Demo initialized. Connecting directly to Pico...")
-        self.get_logger().info("Listening on /demo/relative_jog AND /demo/absolute_target")
+        self.get_logger().info("Listening on /demo/relative_jog, /demo/absolute_target, and /demo/set_current_position")
 
     # ==========================================
     # ROS 2 LOGIC (Movement Control)
@@ -101,6 +105,21 @@ class MonolithicRailDemo(Node):
         
         self.get_logger().info(f"Received Absolute Target: {target_mm} mm. Calculated difference: {jog_distance:.2f} mm")
         self._execute_jog(jog_distance)
+
+    def set_current_position_callback(self, msg):
+        """Sets the current physical location to the published absolute value."""
+        if not self._pre_move_checks_pass(): 
+            return
+            
+        new_position = msg.data
+        self.get_logger().info(f"Setting current GRBL X-axis position to: {new_position:.2f} mm")
+        
+        # G92 sets the current origin/offset without causing physical movement
+        self.send_gcode(f"G92X{new_position}")
+        
+        # Force an immediate internal update so absolute logic doesn't lag
+        self.current_position_mm = new_position
+        self.position_initialized = True
 
     def evaluate_movement_state(self):
         if not self.position_initialized:
