@@ -11,12 +11,6 @@ class MonolithicRailDemo(Node):
     def __init__(self):
         super().__init__('standalone_rail_demo')
 
-        # --- DECLARE GRBL CONFIGURATION PARAMETERS ---
-        # You can overwrite these via launch files or terminal later
-        self.declare_parameter('homing_enable', 1)         # $22
-        self.declare_parameter('homing_dir_mask', 0)       # $23 (0-7 depending on direction)
-        self.declare_parameter('homing_limit_invert', 0)   # $5 (0 for NO, 1 for NC)
-
         # --- HARDWARE CONNECTION STATES ---
         self.serial_lock = threading.Lock()
         self.is_connected = False
@@ -192,36 +186,20 @@ class MonolithicRailDemo(Node):
     # ==========================================
 
     def connect_to_pico(self):
-        """Handles connection and pushes GRBL configuration parameters automatically."""
+        """Handles connection without overwriting saved GRBL EEPROM settings."""
         try:
             self.pico_serial = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
             self.is_connected = True
             time.sleep(1.0)
             
-            # 1. Fetch current ROS 2 parameters
-            h_enable = self.get_parameter('homing_enable').value
-            h_dir = self.get_parameter('homing_dir_mask').value
-            h_invert = self.get_parameter('homing_limit_invert').value
-            
-            self.get_logger().info("Writing Homing Parameters to GRBL Firmware...")
-            
-            # 2. Send parameters sequentially with a small delay for EEPROM write
-            self.send_gcode(f"$22={h_enable}")
-            time.sleep(0.1)
-            self.send_gcode(f"$23={h_dir}")
-            time.sleep(0.1)
-            self.send_gcode(f"$5={h_invert}")
-            time.sleep(0.1)
-
-            # 3. Unlock the system
+            # 1. Unlock the system
             self.send_gcode("$X") 
-            self.get_logger().info("Successfully connected and configured GRBL Pico.")
+            self.get_logger().info("Successfully connected to GRBL Pico.")
             return True
             
         except Exception as e:
             self.get_logger().error(f"Failed to connect: {e}")
             return False
-
     def connection_watchdog_loop(self):
         while self.keep_running and rclpy.ok():
             if not self.is_connected:
