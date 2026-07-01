@@ -11,6 +11,12 @@ class MonolithicRailDemo(Node):
     def __init__(self):
         super().__init__('standalone_rail_demo')
 
+        # --- DECLARE GRBL CONFIGURATION PARAMETERS ---
+        # You can overwrite these via launch files or terminal later
+        self.declare_parameter('homing_enable', 1)         # $22
+        self.declare_parameter('homing_dir_mask', 0)       # $23 (0-7 depending on direction)
+        self.declare_parameter('homing_limit_invert', 0)   # $5 (0 for NO, 1 for NC)
+
         # --- HARDWARE CONNECTION STATES ---
         self.serial_lock = threading.Lock()
         self.is_connected = False
@@ -45,8 +51,9 @@ class MonolithicRailDemo(Node):
         self.moving_pub = self.create_publisher(Bool, '/demo/is_moving', 10)
         self.alarm_pub = self.create_publisher(Bool, '/demo/in_alarm', 10)
         
-        # 5. Safety service
+        # 5. Safety & Homing services
         self.clear_alarm_srv = self.create_service(Trigger, '~/clear_alarm', self.clear_alarm_callback)
+        self.home_srv = self.create_service(Trigger, '~/home_rail', self.home_rail_callback)
 
         # --- HARDWARE THREADS & TIMERS ---
         self.keep_running = True
@@ -59,6 +66,7 @@ class MonolithicRailDemo(Node):
 
         self.get_logger().info("Dual-Mode Demo initialized. Connecting directly to Pico...")
         self.get_logger().info("Listening on /demo/relative_jog, /demo/absolute_target, and /demo/set_current_position")
+        self.get_logger().info("Services available: ~/clear_alarm and ~/home_rail")
 
     # ==========================================
     # ROS 2 LOGIC (Movement Control)
@@ -163,19 +171,55 @@ class MonolithicRailDemo(Node):
         response.message = "Alarm cleared."
         return response
 
+    def home_rail_callback(self, request, response):
+        """Triggers the GRBL built-in homing sequence ($H)."""
+        if not self.is_connected:
+            response.success = False
+            response.message = "Pico not connected."
+            return response
+            
+        self.get_logger().info("Sending Homing Command ($H) to Pico...")
+        
+        # The $H command tells GRBL to start its homing cycle using limit switches
+        self.send_gcode("$H") 
+        
+        response.success = True
+        response.message = "Homing sequence initiated."
+        return response
+
     # ==========================================
     # HARDWARE COMMUNICATION
     # ==========================================
 
     def connect_to_pico(self):
+        """Handles connection and pushes GRBL configuration parameters automatically."""
         try:
             self.pico_serial = serial.Serial(self.serial_port, self.baud_rate, timeout=0.1)
             self.is_connected = True
             time.sleep(1.0)
+            
+            # 1. Fetch current ROS 2 parameters
+            h_enable = self.get_parameter('homing_enable').value
+            h_dir = self.get_parameter('homing_dir_mask').value
+            h_invert = self.get_parameter('homing_limit_invert').value
+            
+            self.get_logger().info("Writing Homing Parameters to GRBL Firmware...")
+            
+            # 2. Send parameters sequentially with a small delay for EEPROM write
+            self.send_gcode(f"$22={h_enable}")
+            time.sleep(0.1)
+            self.send_gcode(f"$23={h_dir}")
+            time.sleep(0.1)
+            self.send_gcode(f"$5={h_invert}")
+            time.sleep(0.1)
+
+            # 3. Unlock the system
             self.send_gcode("$X") 
-            self.get_logger().info("Successfully connected to GRBL Pico.")
+            self.get_logger().info("Successfully connected and configured GRBL Pico.")
             return True
-        except Exception:
+            
+        except Exception as e:
+            self.get_logger().error(f"Failed to connect: {e}")
             return False
 
     def connection_watchdog_loop(self):
