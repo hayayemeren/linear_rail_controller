@@ -45,6 +45,9 @@ ros2 service call /standalone_rail_demo/clear_alarm std_srvs/srv/Trigger
 # Demo Set Current Position
 ros2 topic pub --once /demo/set_current_position std_msgs/msg/Float64 "{data: 150.0}"
 
+# Demo Start Step One Homing
+ros2 service call /standalone_rail_demo/home_rail std_srvs/srv/Trigger
+
 # Demo Topics
 ros2 topic echo /demo/current_position_mm
 
