@@ -25,7 +25,7 @@ class AbsoluteHomerLeft(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('rail_length_mm', 1000.0), ('steps_per_mm', 320.0),
+                ('rail_length_mm', 1000.0), ('steps_per_mm', 640.0),
                 ('max_velocity_mm_s', 300.0), ('max_acceleration_mm_s2', 150.0),
                 ('invert_direction', False), ('serial_port', '/dev/ttyACM0'),
                 ('baud_rate', 115200), ('status_poll_rate_hz', 50.0),
