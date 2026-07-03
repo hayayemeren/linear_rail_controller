@@ -9,7 +9,7 @@ absolute_homer_left:
     baud_rate: 115200
     status_poll_rate_hz: 50.0
     search_velocity_mm_s: 5.0
-    jog_velocity_mm_s: 50.0
+    jog_velocity_mm_s: 20.0
     sensor_1_pin: 17
     sensor_1_pos: 0.0
     sensor_2_pin: 27
@@ -29,7 +29,7 @@ absolute_homer_right:
     baud_rate: 115200
     status_poll_rate_hz: 50.0
     search_velocity_mm_s: 15.0
-    jog_velocity_mm_s: 50.0
+    jog_velocity_mm_s: 20.0
     sensor_pin: 23
     sheet_positions_mm: [0.0, -100.0, -250.0, -450.0]  # Update with your actual measurements
     gap_tolerance_mm: 5.0
