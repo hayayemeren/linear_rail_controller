@@ -27,7 +27,6 @@ setup(
         'console_scripts': [
             # UPDATED: Points to the new python file and creates the executable name
             'absolute_homer_left = linear_rail_controller.absolute_homer_left:main',
-            'rail_jogger_left = linear_rail_controller.rail_jogger_left:main',
             'demo = linear_rail_controller.demo:main'
         ],
     },
