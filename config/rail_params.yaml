@@ -1,7 +1,7 @@
 absolute_homer_left:
   ros__parameters:
     rail_length_mm: 1000.0
-    steps_per_mm: 320.0
+    steps_per_mm: 640.0
     max_velocity_mm_s: 300.0
     max_acceleration_mm_s2: 150.0
     invert_direction: false
@@ -21,7 +21,7 @@ absolute_homer_left:
 absolute_homer_right:
   ros__parameters:
     rail_length_mm: 1000.0
-    steps_per_mm: 320.0
+    steps_per_mm: 640.0
     max_velocity_mm_s: 300.0
     max_acceleration_mm_s2: 150.0
     invert_direction: false
