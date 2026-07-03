@@ -5,7 +5,7 @@ absolute_homer_left:
     max_velocity_mm_s: 300.0
     max_acceleration_mm_s2: 150.0
     invert_direction: false
-    serial_port: "/dev/ttyACM0"
+    serial_port: "/dev/ttyACM0"  # Left Pico
     baud_rate: 115200
     status_poll_rate_hz: 50.0
     search_velocity_mm_s: 5.0
@@ -16,4 +16,21 @@ absolute_homer_left:
     sensor_2_pos: -300.0
     sensor_3_pin: 22
     sensor_3_pos: -600.0
+    sensor_bounce_time: 0.01
+
+absolute_homer_right:
+  ros__parameters:
+    rail_length_mm: 1000.0
+    steps_per_mm: 320.0
+    max_velocity_mm_s: 300.0
+    max_acceleration_mm_s2: 150.0
+    invert_direction: false
+    serial_port: "/dev/ttyACM0"  # Right Pico
+    baud_rate: 115200
+    status_poll_rate_hz: 50.0
+    search_velocity_mm_s: 15.0
+    jog_velocity_mm_s: 50.0
+    sensor_pin: 23
+    sheet_positions_mm: [0.0, -100.0, -250.0, -450.0]  # Update with your actual measurements
+    gap_tolerance_mm: 5.0
     sensor_bounce_time: 0.01

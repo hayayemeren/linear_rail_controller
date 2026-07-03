@@ -2,7 +2,6 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-# UPDATED: Package name changed
 package_name = 'linear_rail_controller'
 
 setup(
@@ -25,8 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            # UPDATED: Points to the new python file and creates the executable name
             'absolute_homer_left = linear_rail_controller.absolute_homer_left:main',
+            'absolute_homer_right = linear_rail_controller.absolute_homer_right:main', # <-- ADDED NEW NODE
             'demo = linear_rail_controller.demo:main'
         ],
     },
