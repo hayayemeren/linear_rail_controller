@@ -58,25 +58,45 @@ ros2 topic echo /absolute_homer_right/in_alarm
 ros2 topic echo /absolute_homer_right/is_moving
 
 # Demo
-ros2 run linear_rail_controller demo
+ros2 launch linear_rail_controller demo.launch.py
 
-# Demo Message
-ros2 topic pub /demo/absolute_target std_msgs/msg/Float64 "{data: -200.0}" -1
+# Demo Message x Axis
+ros2 topic pub /demo/x/absolute_target std_msgs/msg/Float64 "{data: -200.0}" -1
 
-ros2 topic pub /demo/relative_jog std_msgs/msg/Float64 "{data: 50.0}" -1
+ros2 topic pub /demo/x/relative_jog std_msgs/msg/Float64 "{data: 50.0}" -1
+
+# Demo Set Current x Position
+ros2 topic pub --once /demo/x/set_current_position std_msgs/msg/Float64 "{data: 150.0}"
+
+# Listen Topics x
+ros2 topic echo /demo/x/current_position_mm
+
+ros2 topic echo /demo/x/is_moving
+
+# Demo Message y Axis
+ros2 topic pub /demo/y/absolute_target std_msgs/msg/Float64 "{data: -200.0}" -1
+
+ros2 topic pub /demo/y/relative_jog std_msgs/msg/Float64 "{data: 50.0}" -1
+
+# Demo Set Current y Position
+ros2 topic pub --once /demo/y/set_current_position std_msgs/msg/Float64 "{data: 150.0}"
+
+# Listen Position y
+ros2 topic echo /demo/y/current_position_mm
+
+ros2 topic echo /demo/y/is_moving
 
 # Demo Alarm Clear
 ros2 service call /standalone_rail_demo/clear_alarm std_srvs/srv/Trigger
 
-# Demo Set Current Position
-ros2 topic pub --once /demo/set_current_position std_msgs/msg/Float64 "{data: 150.0}"
-
-# Demo Start Step One Homing
-ros2 service call /standalone_rail_demo/home_rail std_srvs/srv/Trigger
-
-# Demo Topics
-ros2 topic echo /demo/current_position_mm
-
-ros2 topic echo /demo/is_moving
-
 ros2 topic echo /demo/in_alarm
+
+# Demo Start Homing
+ros2 service call /standalone_rail_demo/x/home std_srvs/srv/Trigger
+
+ros2 service call /standalone_rail_demo/y/home std_srvs/srv/Trigger
+
+ros2 service call /standalone_rail_demo/home_all std_srvs/srv/Trigger
+
+# Flash Pico
+ros2 service call /standalone_rail_demo/flash_pico_config std_srvs/srv/Trigger

@@ -1,0 +1,14 @@
+standalone_rail_demo:
+  ros__parameters:
+    serial_port: "/dev/ttyACM0"
+    baud_rate: 115200
+    jog_velocity_mm_s: 50.0
+    grbl_scale: 0.5
+    rail_length_mm: 2900.0
+    steps_per_mm: 320.0
+    max_velocity_mm_s: 300.0
+    max_acceleration_mm_s2: 150.0
+    invert_direction: false
+    enable_soft_limits: false
+    enable_hard_limits: false
+    enable_homing: false
