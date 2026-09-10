@@ -2,7 +2,7 @@ standalone_rail_demo:
   ros__parameters:
     serial_port: "/dev/ttyACM0"
     baud_rate: 115200
-    jog_velocity_mm_s: 50.0
+    jog_velocity_mm_s: 100.0
     grbl_scale: 0.5
     rail_length_mm: 2900.0
     steps_per_mm: 320.0
