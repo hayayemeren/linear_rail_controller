@@ -20,13 +20,13 @@ class MonolithicRailDemo(Node):
         self.serial_port = self.declare_parameter('serial_port', '/dev/ttyACM0').value
         self.baud_rate = self.declare_parameter('baud_rate', 115200).value
         self.jog_velocity_mm_s = self.declare_parameter('jog_velocity_mm_s', 50.0).value
-        self.grbl_scale = self.declare_parameter('grbl_scale', 0.5).value
+        self.grbl_scale = self.declare_parameter('grbl_scale', 1.0).value
         
         # --- HARDWARE CONFIG PARAMETERS ---
-        self.rail_length_mm = self.declare_parameter('rail_length_mm', 2900.0).value
-        self.steps_per_mm = self.declare_parameter('steps_per_mm', 320.0).value
+        self.rail_length_mm = self.declare_parameter('rail_length_mm', 2700.0).value
+        self.steps_per_mm = self.declare_parameter('steps_per_mm', 160.0).value
         self.max_velocity_mm_s = self.declare_parameter('max_velocity_mm_s', 300.0).value
-        self.max_acceleration_mm_s2 = self.declare_parameter('max_acceleration_mm_s2', 150.0).value
+        self.max_acceleration_mm_s2 = self.declare_parameter('max_acceleration_mm_s2', 400.0).value
         self.invert_direction = self.declare_parameter('invert_direction', False).value
         self.enable_soft_limits = self.declare_parameter('enable_soft_limits', False).value
         self.enable_hard_limits = self.declare_parameter('enable_hard_limits', True).value
@@ -326,8 +326,8 @@ class MonolithicRailDemo(Node):
         self.send_gcode("$H") 
         
         self.homing_state = 1
-        self.pending_x_offset = 5.0 * self.grbl_scale
-        self.pending_y_offset = 2790.0 * self.grbl_scale
+        self.pending_x_offset = 0.0 * self.grbl_scale
+        self.pending_y_offset = 2757.0 * self.grbl_scale
         
         response.success = True
         response.message = "Full homing sequence initiated. Position will be set to X=5, Y=2790."
